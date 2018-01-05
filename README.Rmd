@@ -1,0 +1,16 @@
+---
+title: "Text Mining Dracula"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Description
+
+Just finished working through Julia Silge and David Robinson's "Text Mining with R" (O'Reilly, 2017). Applying techniques from that book to Bram Stoker's Dracula.
+
+## Resources
+
+* [Silge and Robinson "Text Mining with R" (O'Reilly, 2017)](http://tidytextmining.com)
