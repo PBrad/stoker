@@ -11,6 +11,9 @@ library(ggplot2)
 library(gutenbergr)
 library(tidytext)
 library(stringr)
+library(tidyr)
+library(wordcloud)
+library(reshape2)
 
 # Load --------------------------------------------------------------------
 
@@ -58,15 +61,64 @@ tidy_dracula %>%
 
 # Sentiment Analysis ------------------------------------------------------
 
+# Get change in sentiment over time
 dracula_sentiment <- tidy_dracula %>%
   inner_join(get_sentiments("bing")) %>% 
   mutate(linenumber = row_number()) %>% 
-  count(word, index = linenumber %/% 80, sentiment) %>% 
-  spread(sentiment, n, fill = 0) %>% 
-  mutate(sentiment = positive - negative)
+  count(index = linenumber %/% 80, sentiment) %>% 
+  spread(sentiment, n, fill = 0) %>% # fill missing values with 0
+  mutate(sentiment = positive - negative) %>% 
+  group_by(index) 
 
 dracula_sentiment %>% 
-  ggplot(aes(index, sentiment)) +
+  ggplot(aes(index, sentiment, fill = sentiment > 0)) +
   geom_col(show.legend = FALSE) +
+  theme_minimal() +
   ggtitle("Dracula Sentiment Trajectory")
+
+# Top positive and negative words
+
+pos_neg_counts <- tidy_dracula %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment, sort = TRUE) %>% 
+  ungroup() # Looks good
+
+pos_neg_counts %>% 
+  group_by(sentiment) %>% 
+  top_n(10) %>% 
+  ungroup() %>% 
+  mutate(word = reorder(word, n)) %>% 
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(y = "Contribution of Sentiment", 
+       x = NULL) +
+  coord_flip() + 
+  theme_minimal()
+
+## "Miss" is probably a misfire (salutation rather than a true
+## negative word - at least in some cases). Add to custom stop
+## words
+
+custom_stop_words <- bind_rows(data_frame(word = c("miss"),
+                                          lexicon = c("custom")),
+                               stop_words)
+
+# Wordclouds --------------------------------------------------------------
+
+# Standard wordcloud
+tidy_dracula %>% 
+  anti_join(custom_stop_words) %>% 
+  count(word) %>% 
+  with(wordcloud(word, n, max.words = 100))
+
+# Comparison cloud
+
+tidy_dracula %>% 
+  anti_join(custom_stop_words) %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment, sort = TRUE) %>% 
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>% 
+  comparison.cloud(colors = c("gray20", "gray80"),
+                   max.words = 100)
 
