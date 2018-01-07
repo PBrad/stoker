@@ -113,12 +113,56 @@ tidy_dracula %>%
   with(wordcloud(word, n, max.words = 100))
 
 # Comparison cloud
-
 tidy_dracula %>% 
   anti_join(custom_stop_words) %>% 
   inner_join(get_sentiments("bing")) %>% 
   count(word, sentiment, sort = TRUE) %>% 
+  # Convert to matrix with acast() from reshape2
   acast(word ~ sentiment, value.var = "n", fill = 0) %>% 
   comparison.cloud(colors = c("gray20", "gray80"),
                    max.words = 100)
+
+# Identify most positive and negative chapters ----------------------------
+
+bing_positive <- get_sentiments("bing") %>% 
+  filter(sentiment == "positive")
+
+bing_negative <- get_sentiments("bing") %>% 
+  filter(sentiment == "negative")
+
+wordcounts <- tidy_dracula %>% # for denominator
+  group_by(chapter) %>% 
+  summarize(words = n())
+
+# Most positive chapter is 32
+tidy_dracula %>% 
+  semi_join(bing_positive) %>% 
+  group_by(chapter) %>% 
+  summarize(positive_words = n()) %>% 
+  left_join(wordcounts, by = "chapter") %>% 
+  mutate(ratio = positive_words / words) %>% 
+  filter(chapter != 0) %>% 
+  arrange(desc(ratio)) %>% 
+  top_n(5) %>% 
+  ungroup()
+
+tidy_dracula %>% 
+  filter(chapter == 32)
+
+# Most negative chapter is 46
+tidy_dracula %>% 
+  semi_join(bing_negative) %>% 
+  group_by(chapter) %>% 
+  summarize(negative_words = n()) %>% 
+  left_join(wordcounts, by = "chapter") %>% 
+  mutate(ratio = negative_words / words) %>% 
+  filter(chapter != 0) %>% 
+  arrange(desc(ratio)) %>% 
+  top_n(5) %>% 
+  ungroup()
+
+tidy_dracula %>% 
+  filter(chapter == 46)  
+## These chapter counts are off... need to check
+## the regex
 
