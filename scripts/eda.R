@@ -32,6 +32,17 @@ head(dracula)
 
 tail(dracula)
 
+# Remove Front Matter -----------------------------------------------------
+## Remove first 156 rows (title page, TOC) to avoid
+## the TOC entries being treated as chapters
+
+nrow(dracula)
+
+dracula <- dracula %>% 
+  filter(row_number() > 156)
+  
+nrow(dracula)
+
 # Tidy --------------------------------------------------------------------
 
 tidy_dracula <- dracula %>% 
@@ -134,7 +145,7 @@ wordcounts <- tidy_dracula %>% # for denominator
   group_by(chapter) %>% 
   summarize(words = n())
 
-# Most positive chapter is 32
+# Most positive chapter is 5
 tidy_dracula %>% 
   semi_join(bing_positive) %>% 
   group_by(chapter) %>% 
@@ -147,9 +158,9 @@ tidy_dracula %>%
   ungroup()
 
 tidy_dracula %>% 
-  filter(chapter == 32)
+  filter(chapter == 5)
 
-# Most negative chapter is 46
+# Most negative chapter is 19
 tidy_dracula %>% 
   semi_join(bing_negative) %>% 
   group_by(chapter) %>% 
@@ -162,7 +173,6 @@ tidy_dracula %>%
   ungroup()
 
 tidy_dracula %>% 
-  filter(chapter == 46)  
-## These chapter counts are off... need to check
-## the regex
+  filter(chapter == 19)  
+
 
