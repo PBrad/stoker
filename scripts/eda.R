@@ -32,7 +32,8 @@ head(dracula)
 
 tail(dracula)
 
-# Remove Front Matter -----------------------------------------------------
+# Clean Up ----------------------------------------------------------------
+
 ## Remove first 156 rows (title page, TOC) to avoid
 ## the TOC entries being treated as chapters
 
@@ -53,6 +54,15 @@ tidy_dracula <- dracula %>%
   ungroup() %>% 
   unnest_tokens(word, text) %>% # one word per row
   anti_join(stop_words) # remove stop words
+
+# Use str_extract() to remove underscores (used in
+## gutenbergr to indicate emphasis). We don't want
+## "_text" and "text" to be treated as two different
+## words. Remove digits as well.
+
+tidy_dracula <- tidy_dracula %>% 
+  mutate(word = str_extract(word, "[a-z']+")) %>% 
+  filter(!is.na(word)) # removing any resulting NA's
 
 # Word Frequencies --------------------------------------------------------
 
@@ -175,4 +185,49 @@ tidy_dracula %>%
 tidy_dracula %>% 
   filter(chapter == 19)  
 
+# N-grams -----------------------------------------------------------------
 
+dracula_bigrams <- dracula %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+dracula_bigrams %>% 
+  count(bigram, sort = TRUE)
+
+# Not too helpful ("of the", "in the", "to the").
+## Use separate() from tidyr to split and then remove
+## stop words
+
+bigrams_separated <- dracula_bigrams %>% 
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+bigrams_filtered <- bigrams_separated %>% 
+  filter(!word1 %in% custom_stop_words$word) %>% 
+  filter(!word2 %in% custom_stop_words$word)
+
+# Cleaned up bigrams
+
+bigram_counts <- bigrams_filtered %>% 
+  count(word1, word2, sort = TRUE)
+
+bigram_counts
+
+# Put them back together with united()
+
+bigrams_united <- bigrams_filtered %>% 
+  unite(bigram, word1, word2, sep = " ")
+
+bigrams_united
+
+# Trigrams
+
+dracula_trigrams <- dracula %>% 
+  unnest_tokens(trigram, text, token = "ngrams", n = 3) %>%
+  separate(trigram, c("word1", "word2", "word3"), sep = " ") %>% 
+  filter(!word1 %in% custom_stop_words$word,
+         !word2 %in% custom_stop_words$word,
+         !word3 %in% custom_stop_words$word) %>% 
+  count(word1, word2, word3, sort = TRUE)
+
+dracula_trigrams
+  
+    
