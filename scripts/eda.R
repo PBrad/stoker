@@ -188,7 +188,7 @@ tidy_dracula %>%
 # N-grams -----------------------------------------------------------------
 
 dracula_bigrams <- dracula %>% 
-  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) 
 
 dracula_bigrams %>% 
   count(bigram, sort = TRUE)
@@ -202,7 +202,12 @@ bigrams_separated <- dracula_bigrams %>%
 
 bigrams_filtered <- bigrams_separated %>% 
   filter(!word1 %in% custom_stop_words$word) %>% 
-  filter(!word2 %in% custom_stop_words$word)
+  filter(!word2 %in% custom_stop_words$word) %>%
+  # Remove _ and numbers...not sure this is the best place
+  mutate(word1 = str_extract(word1, "[a-z']+")) %>%
+  mutate(word2 = str_extract(word2, "[a-z']+")) %>% 
+  filter(!is.na(word1),
+         !is.na(word2))
 
 # Cleaned up bigrams
 
@@ -226,6 +231,12 @@ dracula_trigrams <- dracula %>%
   filter(!word1 %in% custom_stop_words$word,
          !word2 %in% custom_stop_words$word,
          !word3 %in% custom_stop_words$word) %>% 
+  mutate(word1 = str_extract(word1, "[a-z']+")) %>% 
+  mutate(word2 = str_extract(word2, "[a-z']+")) %>% 
+  mutate(word3 = str_extract(word3, "[a-z']+")) %>%
+  filter(!is.na(word1),
+         !is.na(word2),
+         !is.na(word3)) %>% 
   count(word1, word2, word3, sort = TRUE)
 
 dracula_trigrams
