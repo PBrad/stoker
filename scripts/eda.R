@@ -241,4 +241,67 @@ dracula_trigrams <- dracula %>%
 
 dracula_trigrams
   
-    
+# Analyzing bigrams
+
+# Streets
+bigrams_filtered %>% 
+  filter(word2 == "street") %>% 
+  count(word1, sort = TRUE)
+
+# Context RE: negatives
+bigrams_separated %>% 
+  filter(word1 == "not") %>% 
+  count(word1, word2, sort = TRUE)
+
+# Use AFINN lexicon to identify how often sentiment-
+## associated words are preceded by a negating word
+
+AFINN <- get_sentiments("afinn") # +/= ratings 
+
+AFINN
+
+not_words <- bigrams_separated %>% 
+  filter(word1 == "not") %>% 
+  inner_join(AFINN, by = c(word2 = "word")) %>% 
+  count(word2, score, sort = TRUE) %>% 
+  ungroup()
+
+# Words contributing the most in the "wrong" direction
+not_words %>% 
+  mutate(contribution = n * score) %>% 
+  arrange(desc(abs(contribution))) %>% 
+  head(20) %>% 
+  mutate(word2 = reorder(word2, contribution)) %>% 
+  ggplot(aes(word2, contribution, fill = contribution > 0)) +
+  geom_col(show.legend = FALSE) +
+  xlab("Words preceded by \"not\"") +
+  ylab("Sentiment score * number of occurrences") +
+  coord_flip() +
+  theme_minimal()
+
+negation_words <- c("not", "no", "never", "without")
+
+negated_words <- bigrams_separated %>% 
+  filter(word1 %in% negation_words) %>% 
+  inner_join(AFINN, by = c(word2 = "word")) %>% 
+  count(word1, word2, score, sort = TRUE) %>% 
+  ungroup() %>% 
+  mutate(contribution = n * score) %>% 
+  group_by(word1) %>% 
+  arrange(desc(abs(contribution))) %>% 
+  filter(row_number() <= 20) %>% 
+  ungroup()
+
+negated_words %>% 
+  group_by(word1) %>% 
+  arrange(desc(contribution)) %>% 
+  ungroup() %>% 
+  ggplot(aes(reorder(word2, contribution), contribution, fill = contribution > 0)) +
+  geom_col(show.legend = FALSE) +
+  xlab("Words preceded by \"negation words\"") +
+  ylab("Sentiment score * number of occurrences") +
+  facet_wrap(~word1, ncol = 2, scales = "free") +
+  coord_flip() +
+  theme_minimal() 
+
+# Visualizing with network
