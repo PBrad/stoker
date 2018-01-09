@@ -14,6 +14,8 @@ library(stringr)
 library(tidyr)
 library(wordcloud)
 library(reshape2)
+library(igraph)
+library(ggraph)
 
 # Load --------------------------------------------------------------------
 
@@ -304,4 +306,20 @@ negated_words %>%
   coord_flip() +
   theme_minimal() 
 
-# Visualizing with network
+# Network Graph -----------------------------------------------------------
+
+bigram_counts
+
+bigram_graph <- bigram_counts %>% 
+  filter(n > 5) %>% 
+  graph_from_data_frame()
+
+bigram_graph
+
+set.seed(2018)
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link() +
+  geom_node_point() +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) + 
+  theme_void()
