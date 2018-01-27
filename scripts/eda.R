@@ -380,3 +380,14 @@ word_cors %>%
   facet_wrap(~ item1, scales = "free") +
   coord_flip() +
   theme_minimal()
+
+set.seed(2018)
+
+word_cors %>% 
+  filter(correlation > .2) %>% 
+  graph_from_data_frame() %>% 
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
+  geom_node_point(color = "red", size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
