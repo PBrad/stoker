@@ -355,7 +355,7 @@ word_cors <- dracula_section %>%
 word_cors
 
 word_cors %>% 
-  filter(item1 == "dracula")
+  filter(item1 == "evil")
 
 word_cors %>% 
   filter(item1 == "vampire")
@@ -370,7 +370,10 @@ word_cors %>%
   filter(item1 == "time")
 
 word_cors %>% 
-  filter(item1 %in% c("vampire", "night", "dark", "time")) %>% 
+  filter(item1 == "blood")
+
+word_cors %>% 
+  filter(item1 %in% c("evil", "night", "dark", "time")) %>% 
   group_by(item1) %>% 
   top_n(6) %>% 
   ungroup() %>% 
@@ -388,6 +391,23 @@ word_cors %>%
   graph_from_data_frame() %>% 
   ggraph(layout = "fr") +
   geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
-  geom_node_point(color = "red", size = 5) +
+  geom_node_point(color = "#5F0D0A", alpha = .8, size = 5) +
   geom_node_text(aes(label = name), repel = TRUE) +
   theme_void()
+
+# a vampire themed ggraph
+word_cors %>% 
+  filter(correlation > .2) %>% 
+  graph_from_data_frame() %>% 
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation, color = "white"), show.legend = FALSE) +
+  geom_node_point(color = "#5F0D0A", alpha = .8, size = 5) +
+  geom_node_text(aes(label = name, color = "white"), repel = TRUE, show.legend = FALSE) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank()
+  )
