@@ -347,6 +347,7 @@ dracula_section <- dracula %>%
   filter(!is.na(word)) %>% # removing any resulting NA's
   filter(!word %in% stop_words$word)
 
+# Correlate
 word_cors <- dracula_section %>% 
   group_by(word) %>% 
   filter(n() >= 20) %>% #  common words
@@ -354,6 +355,7 @@ word_cors <- dracula_section %>%
 
 word_cors
 
+# Check out words correlated with a selection of terms
 word_cors %>% 
   filter(item1 == "evil")
 
@@ -372,6 +374,7 @@ word_cors %>%
 word_cors %>% 
   filter(item1 == "blood")
 
+# Selected terms and their correlates
 word_cors %>% 
   filter(item1 %in% c("evil", "night", "dark", "time")) %>% 
   group_by(item1) %>% 
@@ -384,6 +387,7 @@ word_cors %>%
   coord_flip() +
   theme_minimal()
 
+# Network graph
 set.seed(2018)
 
 word_cors %>% 
@@ -395,7 +399,9 @@ word_cors %>%
   geom_node_text(aes(label = name), repel = TRUE) +
   theme_void()
 
-# a vampire themed ggraph
+# Vampire-themed network graph
+set.seed(1897)
+
 word_cors %>% 
   filter(correlation > .2) %>% 
   graph_from_data_frame() %>% 
