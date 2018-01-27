@@ -12,6 +12,7 @@ library(gutenbergr)
 library(tidytext)
 library(stringr)
 library(tidyr)
+library(widyr)
 library(wordcloud)
 library(reshape2)
 library(igraph)
@@ -323,3 +324,59 @@ ggraph(bigram_graph, layout = "fr") +
   geom_node_point() +
   geom_node_text(aes(label = name), vjust = 1, hjust = 1) + 
   theme_void()
+
+set.seed(2018)
+
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = "n"), show.legend = FALSE,
+                 arrow = a, end_cap = circle(.07, 'inches')) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()
+
+# Co-occurring Words ------------------------------------------------------
+
+# Break into 10-line sections
+dracula_section <- dracula %>% 
+  mutate(section = row_number() %/% 10) %>% 
+  filter(section > 0) %>% 
+  unnest_tokens(word, text) %>% 
+  mutate(word = str_extract(word, "[a-z']+")) %>% 
+  filter(!is.na(word)) %>% # removing any resulting NA's
+  filter(!word %in% stop_words$word)
+
+word_cors <- dracula_section %>% 
+  group_by(word) %>% 
+  filter(n() >= 20) %>% #  common words
+  pairwise_cor(word, section, sort = TRUE) #  from widyr
+
+word_cors
+
+word_cors %>% 
+  filter(item1 == "dracula")
+
+word_cors %>% 
+  filter(item1 == "vampire")
+
+word_cors %>% 
+  filter(item1 == "night")
+
+word_cors %>% 
+  filter(item1 == "stake")
+
+word_cors %>% 
+  filter(item1 == "time")
+
+word_cors %>% 
+  filter(item1 %in% c("vampire", "night", "dark", "time")) %>% 
+  group_by(item1) %>% 
+  top_n(6) %>% 
+  ungroup() %>% 
+  mutate(item2 = reorder(item2, correlation)) %>% 
+  ggplot(aes(item2, correlation)) +
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ item1, scales = "free") +
+  coord_flip() +
+  theme_minimal()
